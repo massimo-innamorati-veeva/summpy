@@ -5,22 +5,26 @@ import sys
 import getopt
 import codecs
 import collections
+from itertools import chain
+
+import nltk
 import numpy
 import networkx
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import pairwise_distances
 
 from . import tools
 from .misc.divrank import divrank, divrank_scipy
 
 
-def lexrank(sentences, continuous=False, sim_threshold=0.1, alpha=0.9,
+def lexrank(documents, continuous=False, sim_threshold=0.1, alpha=0.9,
             use_divrank=False, divrank_alpha=0.25):
     '''
     compute centrality score of sentences.
 
     Args:
-      sentences: [u'こんにちは．', u'私の名前は飯沼です．', ... ]
+      documents: [u'こんにちは．', u'私の名前は飯沼です．', ... ]
       continuous: if True, apply continuous LexRank. (see reference)
       sim_threshold: if continuous is False and smilarity is greater or
         equal to sim_threshold, link the sentences.
@@ -59,16 +63,32 @@ def lexrank(sentences, continuous=False, sim_threshold=0.1, alpha=0.9,
     graph = networkx.DiGraph()
 
     # sentence -> tf
-    sent_tf_list = []
-    for sent in sentences:
-        words = tools.word_segmenter_ja(sent)
-        tf = collections.Counter(words)
-        sent_tf_list.append(tf)
+    # sent_tf_list = []
+    # for sent in sentences:
+    #     words = tools.word_tokenize(sent)
+    #     tf = collections.Counter(words)
+    #     sent_tf_list.append(tf)  # TODO TF vs TFIDF
 
-    sent_vectorizer = DictVectorizer(sparse=True)
-    sent_vecs = sent_vectorizer.fit_transform(sent_tf_list)
+    vectorizer = TfidfVectorizer(
+        max_df=0.8,
+        min_df=2,
+        tokenizer=tools.word_tokenize,
+        ngram_range=(1, 1)
+    )
+    # Fit the TF-IDF model on the whole corpus of
+    sentence_source = []
+    sentences = []
+    for doc_ix, document in enumerate(documents):
+        sents = nltk.sent_tokenize(document)
+        sentences += sents
+        sentence_source += [doc_ix] * len(sents)
 
-    # compute similarities between senteces
+    sent_vecs = vectorizer.fit_transform(sentences).todense()  # use sentence as document
+
+    # sent_vectorizer = DictVectorizer(sparse=True)
+    # sent_vecs = sent_vectorizer.fit_transform(sent_tf_list)
+
+    # compute similarities between sentences
     sim_mat = 1 - pairwise_distances(sent_vecs, sent_vecs, metric='cosine')
 
     if continuous:
@@ -85,14 +105,14 @@ def lexrank(sentences, continuous=False, sim_threshold=0.1, alpha=0.9,
         graph.add_edge(i, j, {'weight': weight})
 
     scores = ranker(graph, **ranker_params)
-    return scores, sim_mat
+    return scores, sim_mat, sentences
 
 
-def summarize(text, sent_limit=None, char_limit=None, imp_require=None,
+def summarize(documents, sent_limit=None, char_limit=None, imp_require=None,
               debug=False, **lexrank_params):
     '''
     Args:
-      text: text to be summarized (unicode string)
+      documents: text to be summarized (unicode string)
       sent_limit: summary length (the number of sentences)
       char_limit: summary length (the number of characters)
       imp_require: cumulative LexRank score [0.0-1.0]
@@ -101,8 +121,7 @@ def summarize(text, sent_limit=None, char_limit=None, imp_require=None,
       list of extracted sentences
     '''
     debug_info = {}
-    sentences = list(tools.sent_splitter_ja(text))
-    scores, sim_mat = lexrank(sentences, **lexrank_params)
+    scores, sim_mat, sentences = lexrank(documents, **lexrank_params)
     sum_scores = sum(scores.itervalues())
     acc_scores = 0.0
     indexes = set()
@@ -152,7 +171,7 @@ Usage:
     options = dict(options)
 
     if len(options) < 2:
-        print _usage
+        print(_usage)
         sys.exit(0)
 
     fname = options['-f']
@@ -180,4 +199,4 @@ Usage:
         imp_require=imp_require, **lexrank_params
     )
     for sent in sentences:
-        print sent.strip().encode(encoding)
+        print(sent.strip().encode(encoding))

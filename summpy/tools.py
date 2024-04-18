@@ -1,9 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import re
-import json
+import nltk
+
+
+stemmer = nltk.stem.PorterStemmer()
+stopwords = nltk.corpus.stopwords
+nltk.download('stopwords')
+nltk.download('punkt')
+
+
+def word_tokenize(text):
+    """Custom word tokenizer removing punctuation and stopwords"""
+    words = nltk.word_tokenize(text.lower())
+    return [stemmer.stem(w) for w in words if w not in stopwords]
 
 
 def tree_encode(obj, encoding='utf-8'):
@@ -16,54 +26,8 @@ def tree_encode(obj, encoding='utf-8'):
             for k, v in obj.iteritems()
         )
         return new_obj
-    elif type_ == unicode:
-        return obj.encode(encoding)
     else:
         return obj
-
-
-def sent_splitter_ja(text, delimiters=set(u'。．？！\n\r'),
-                     parenthesis=u'（）「」『』“”'):
-    '''
-    Args:
-      text: unicode string that contains multiple Japanese sentences.
-      delimiters: set() of sentence delimiter characters.
-      parenthesis: to be checked its correspondence.
-    Returns:
-      generator that yields sentences.
-    '''
-    paren_chars = set(parenthesis)
-    close2open = dict(zip(parenthesis[1::2], parenthesis[0::2]))
-    pstack = []
-    buff = []
-
-    for i, c in enumerate(text):
-        c_next = text[i+1] if i+1 < len(text) else None
-        # check correspondence of parenthesis
-        if c in paren_chars:
-            if c in close2open:  # close
-                if len(pstack) > 0 and pstack[-1] == close2open[c]:
-                    pstack.pop()
-            else:  # open
-                pstack.append(c)
-
-        buff.append(c)
-        if c in delimiters:
-            if len(pstack) == 0 and c_next not in delimiters:
-                yield ''.join(buff)
-                buff = []
-
-    if len(buff) > 0:
-        yield ''.join(buff)
-
-
-if os.environ.get('SUMMPY_USE_JANOME') is not None:
-    from .misc.janome_segmenter import word_segmenter_ja
-else:
-    try:
-        from .misc.mecab_segmenter import word_segmenter_ja
-    except ImportError:
-        from .misc.janome_segmenter import word_segmenter_ja
 
 
 if __name__ == '__main__':

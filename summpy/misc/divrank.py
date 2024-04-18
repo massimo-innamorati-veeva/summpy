@@ -213,22 +213,22 @@ if __name__ == '__main__':
             g.add_edge(u, v)
 
     scores = nx.pagerank(g)
-    print '# PageRank'
-    print '# rank: node score'
+    print('# PageRank')
+    print('# rank: node score')
     #print sum(scores.values())
     for i, n in enumerate(sorted(scores, key=lambda n: scores[n], reverse=True)):
-        print '# {}: {} {}'.format(i+1, n, scores[n])
+        print('# {}: {} {}'.format(i + 1, n, scores[n]))
 
     scores = divrank(g)
-    print '\n# DivRank'
+    print('\n# DivRank')
     #print sum(scores.values())
-    print '# rank: node score'
+    print('# rank: node score')
     for i, n in enumerate(sorted(scores, key=lambda n: scores[n], reverse=True)):
-        print '# {}: {} {}'.format(i+1, n, scores[n])
+        print('# {}: {} {}'.format(i + 1, n, scores[n]))
 
     scores = divrank_scipy(g)
-    print '\n# DivRank (scipy)'
+    print('\n# DivRank (scipy)')
     #print sum(scores.values())
-    print '# rank: node score'
+    print('# rank: node score')
     for i, n in enumerate(sorted(scores, key=lambda n: scores[n], reverse=True)):
-        print '# {}: {} {}'.format(i+1, n, scores[n])
+        print('# {}: {} {}'.format(i + 1, n, scores[n]))
