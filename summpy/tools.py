@@ -1,12 +1,8 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-import nltk
-from string import punctuation
-from summpy.misc import _spacy_stopwords
 
 
-def tree_encode(obj, encoding='utf-8'):
+
+def tree_encode(obj, encoding="utf-8"):
     type_ = type(obj)
     if type_ == list or type_ == tuple:
         return [tree_encode(e, encoding) for e in obj]
@@ -20,5 +16,5 @@ def tree_encode(obj, encoding='utf-8'):
         return obj
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
