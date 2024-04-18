@@ -3,9 +3,10 @@
 
 import nltk
 from string import punctuation
+from summpy.misc import _spacy_stopwords
 
 stemmer = nltk.stem.PorterStemmer()
-stopwords = set(list(nltk.corpus.stopwords.words("english")) + list(punctuation))
+stopwords = set(list(nltk.corpus.stopwords.words("english")) + list(punctuation)).union(_spacy_stopwords)
 nltk.download('stopwords')
 nltk.download('punkt')
 
