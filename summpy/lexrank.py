@@ -19,7 +19,7 @@ from . import tools
 from .misc.divrank import divrank, divrank_scipy
 
 
-def lexrank(documents, continuous=False, sim_threshold=0.1, alpha=0.9,
+def lexrank(documents, vectorizer, continuous=False, sim_threshold=0.1, alpha=0.9,
             use_divrank=False, divrank_alpha=0.25):
     '''
     compute centrality score of sentences.
@@ -63,31 +63,8 @@ def lexrank(documents, continuous=False, sim_threshold=0.1, alpha=0.9,
 
     graph = networkx.DiGraph()
 
-    # sentence -> tf
-    # sent_tf_list = []
-    # for sent in sentences:
-    #     words = tools.word_tokenize(sent)
-    #     tf = collections.Counter(words)
-    #     sent_tf_list.append(tf)  # TODO TF vs TFIDF
-
-    vectorizer = TfidfVectorizer(
-        max_df=0.8,
-        min_df=2,
-        tokenizer=tools.word_tokenize,
-        ngram_range=(1, 1)
-    )
-    # Fit the TF-IDF model on the whole corpus of
-    sentence_source = []
-    sentences = []
-    for doc_ix, document in enumerate(documents):
-        sents = nltk.sent_tokenize(document)
-        sentences += sents
-        sentence_source += [doc_ix] * len(sents)
-
-    sent_vecs = np.asarray(vectorizer.fit_transform(sentences).todense())  # use sentence as document
-
-    # sent_vectorizer = DictVectorizer(sparse=True)
-    # sent_vecs = sent_vectorizer.fit_transform(sent_tf_list)
+    # Fit the TF-IDF model on the whole corpus
+    sent_vecs = np.asarray(vectorizer.fit_transform(documents).todense())  # use sentence as document
 
     # compute similarities between sentences
     sim_mat = 1 - pairwise_distances(sent_vecs, sent_vecs, metric='cosine')
@@ -106,11 +83,11 @@ def lexrank(documents, continuous=False, sim_threshold=0.1, alpha=0.9,
         graph.add_edge(i, j, **{'weight': weight})
 
     scores = ranker(graph, **ranker_params)
-    return scores, sim_mat, sentences
+    return scores, sim_mat
 
 
-def summarize(documents, sent_limit=None, char_limit=None, imp_require=None,
-              debug=False, **lexrank_params):
+def summarize(documents, vectorizer: TfidfVectorizer, sent_limit=None, char_limit=None, imp_require=None,
+              debug=False, **lexrank_params) -> tuple[list[str], list[int]]:
     '''
     Args:
       documents: text to be summarized (unicode string)
@@ -122,14 +99,14 @@ def summarize(documents, sent_limit=None, char_limit=None, imp_require=None,
       list of extracted sentences
     '''
     debug_info = {}
-    scores, sim_mat, sentences = lexrank(documents, **lexrank_params)
+    scores, sim_mat = lexrank(documents, vectorizer, **lexrank_params)
     sum_scores = sum(scores.values())
     acc_scores = 0.0
     indexes = set()
     num_sent, num_char = 0, 0
     for i in sorted(scores, key=lambda i: scores[i], reverse=True):
         num_sent += 1
-        num_char += len(sentences[i])
+        num_char += len(documents[i])
         if sent_limit is not None and num_sent > sent_limit:
             break
         if char_limit is not None and num_char > char_limit:
@@ -140,16 +117,16 @@ def summarize(documents, sent_limit=None, char_limit=None, imp_require=None,
         acc_scores += scores[i]
 
     if len(indexes) > 0:
-        summary_sents = [sentences[i] for i in sorted(indexes)]
+        summary_sents = [documents[i] for i in sorted(indexes)]
     else:
-        summary_sents = sentences
+        summary_sents = documents
 
     if debug:
         debug_info.update({
-            'sentences': sentences, 'scores': scores
+            'documents': documents, 'scores': scores
         })
 
-    return summary_sents, debug_info
+    return summary_sents, sorted(indexes)
 
 
 if __name__ == '__main__':

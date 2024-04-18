@@ -5,17 +5,6 @@ import nltk
 from string import punctuation
 from summpy.misc import _spacy_stopwords
 
-stemmer = nltk.stem.PorterStemmer()
-stopwords = set(list(nltk.corpus.stopwords.words("english")) + list(punctuation)).union(_spacy_stopwords)
-nltk.download('stopwords')
-nltk.download('punkt')
-
-
-def word_tokenize(text):
-    """Custom word tokenizer removing punctuation and stopwords"""
-    words = nltk.word_tokenize(text.lower())
-    return [stemmer.stem(w) for w in words if w not in stopwords]
-
 
 def tree_encode(obj, encoding='utf-8'):
     type_ = type(obj)
