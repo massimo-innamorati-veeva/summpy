@@ -10,6 +10,7 @@ from itertools import chain
 import nltk
 import numpy
 import networkx
+import numpy as np
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import pairwise_distances
@@ -83,7 +84,7 @@ def lexrank(documents, continuous=False, sim_threshold=0.1, alpha=0.9,
         sentences += sents
         sentence_source += [doc_ix] * len(sents)
 
-    sent_vecs = vectorizer.fit_transform(sentences).todense()  # use sentence as document
+    sent_vecs = np.asarray(vectorizer.fit_transform(sentences).todense())  # use sentence as document
 
     # sent_vectorizer = DictVectorizer(sparse=True)
     # sent_vecs = sent_vectorizer.fit_transform(sent_tf_list)
