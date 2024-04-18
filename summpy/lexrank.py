@@ -58,7 +58,7 @@ def lexrank(documents, continuous=False, sim_threshold=0.1, alpha=0.9,
         ranker_params['alpha'] = divrank_alpha
         ranker_params['d'] = alpha
     else:
-        ranker = networkx.pagerank_scipy
+        ranker = networkx.algorithms.link_analysis.pagerank_alg._pagerank_scipy
         ranker_params['alpha'] = alpha
 
     graph = networkx.DiGraph()
@@ -103,7 +103,7 @@ def lexrank(documents, continuous=False, sim_threshold=0.1, alpha=0.9,
         if i == j:
             continue
         weight = sim_mat[i,j] if continuous else 1.0
-        graph.add_edge(i, j, {'weight': weight})
+        graph.add_edge(i, j, **{'weight': weight})
 
     scores = ranker(graph, **ranker_params)
     return scores, sim_mat, sentences
