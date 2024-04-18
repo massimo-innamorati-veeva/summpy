@@ -123,7 +123,7 @@ def summarize(documents, sent_limit=None, char_limit=None, imp_require=None,
     '''
     debug_info = {}
     scores, sim_mat, sentences = lexrank(documents, **lexrank_params)
-    sum_scores = sum(scores.itervalues())
+    sum_scores = sum(scores.values())
     acc_scores = 0.0
     indexes = set()
     num_sent, num_char = 0, 0
