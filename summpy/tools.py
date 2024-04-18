@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import nltk
-
+from string import punctuation
 
 stemmer = nltk.stem.PorterStemmer()
-stopwords = nltk.corpus.stopwords
+stopwords = set(list(nltk.corpus.stopwords.words("english")) + list(punctuation))
 nltk.download('stopwords')
 nltk.download('punkt')
 
