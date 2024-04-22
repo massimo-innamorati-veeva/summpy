@@ -3,6 +3,7 @@
 import codecs
 import getopt
 import sys
+import warnings
 
 import networkx
 import numpy
@@ -10,7 +11,7 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import pairwise_distances
 
-from .misc.divrank import divrank_scipy
+from .misc.divrank import divrank
 
 
 def lexrank(
@@ -56,7 +57,7 @@ def lexrank(
     # configure ranker
     ranker_params = {"max_iter": 1000}
     if use_divrank:
-        ranker = divrank_scipy
+        ranker = divrank
         ranker_params["alpha"] = divrank_alpha
         ranker_params["d"] = alpha
     else:
@@ -66,9 +67,11 @@ def lexrank(
     graph = networkx.DiGraph()
 
     # Fit the TF-IDF model on the whole corpus
-    sent_vecs = np.asarray(
-        vectorizer.fit_transform(documents).todense(),
-    )  # use sentence as document
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        sent_vecs = np.asarray(
+            vectorizer.fit_transform(documents).todense(),
+        )  # use sentence as document
 
     # compute similarities between sentences
     sim_mat = 1 - pairwise_distances(sent_vecs, sent_vecs, metric="cosine")

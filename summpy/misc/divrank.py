@@ -44,8 +44,8 @@ def divrank(
     N = W.number_of_nodes()
 
     # self-link (DivRank)
-    for n in W.nodes_iter():
-        for n_ in W.nodes_iter():
+    for n in W.nodes():
+        for n_ in W.nodes():
             if n != n_:
                 if n_ in W[n]:
                     W[n][n_][weight] *= alpha
@@ -223,7 +223,7 @@ if __name__ == "__main__":
         20: [5],
     }
 
-    for u, vs in edges.iteritems():
+    for u, vs in edges.items():
         for v in vs:
             g.add_edge(u, v)
 
